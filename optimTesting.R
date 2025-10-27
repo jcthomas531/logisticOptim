@@ -1,47 +1,54 @@
-
-
-
-
-
 cd_fit  <- function(beta0, X, Y, lpdf, dlpdf) {
   
-  #eval b0 at logpdf
-  
-  #find deriv of 
-  
-  
+  #calculate the gradient at given point beta0
+  #gradient is just a vector of all of the partial derivs
+  #get partial deriv at this beta wrt all x_i, take the norm and eval against tolerance
+  gradient <- rep(NA, ncol(X))
+  for (i in 1:ncol(X)) {
+    gradient[i] <- dlpdf(beta0, i, X, Y)
+  }
+  betaEst <- beta0
+  #choosing same tolerance he used in example, using l2 norm
+  #although could also set this to maximum... not sure which is better
+  while(norm(gradient, type = "2") > 1e-8) {
+    #keeping track of all the betas not necessary, but this is the way i first thought of
+    updateHolder <- vector(mode = "list", length = ncol(X) + 1)
+    updateHolder[[1]] <- betaEst
+    for (i in 1:ncol(X)) {
+      #get partial deriv wrt ith component
+      dfi <- dlpdf(updateHolder[[i]], i, X, Y)
+      #update beta
+      updateHolder[[i+1]] <- updateHolder[[i]]
+      updateHolder[[i+1]][i,] <- updateHolder[[i+1]][i,] - dfi
+      #are we moving in correct direction? ie is likelihood getting bigger, if not...
+      while (lpdf(updateHolder[[i+1]], X, Y) < lpdf(updateHolder[[i]], X, Y)) {
+        #half step
+        dfi <- dfi/2
+        updateHolder[[i+1]] <- updateHolder[[i]]
+        updateHolder[[i+1]][i,] <- updateHolder[[i+1]][i,] - dfi
+      }
+    }
+    #beta estimate for this iteration
+    betaEst <- updateHolder[[ncol(X)+1]]
+    #deriv at this estimate
+    for (i in 1:ncol(X)) {
+      gradient[i] <- dlpdf(betaEst, i, X, Y)
+    }
+    
+  }
+  return(betaEst)
 }
 
 
 
 
-eval0 <- lpdf(beta0, X, Y)
 
 
 
-updateHolder <- vector(mode = "list", length = ncol(x) + 1)
-updateHolder[[1]] <- beta0
-#deriv with respect to x1
-i <- 1
-df1 <- dlpdf(beta0, i, X, Y)
-updateHolder[[1 + i]] <- updateHolder[[1]][i,] - df1
-#are we moving in the correct direction?
-lpdf(updateHolder[[1 + i]], X, Y) > lpdf(updateHolder[[1]], X, Y)
-#deriv with respect to x2
-i <- 2
-df2 <- dlpdf(updateHolder[[1 + i]], i, X, Y)
-updateHolder[[1 + i]] <- updateHolder[[i]][i,] - df1
-#are we moving in the correct direction?
-lpdf(updateHolder[[1 + i]], X, Y) > lpdf(updateHolder[[i]], X, Y)
 
 
-#operationalize
 
-updateHolder <- vector(mode = "list", length = ncol(x) + 1)
-updateHolder[[1]] <- beta0
-for (i in 1:ncol(X)) {
-  
-}
+
 
 
 
